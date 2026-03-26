@@ -11,6 +11,9 @@ function isValidViolationType(value) {
     "copy_attempt",
     "back_navigation",
     "before_unload",
+    "devtools_open",
+    "split_screen_suspected",
+    "viewport_resize",
   ]);
   return allowed.has(value);
 }
