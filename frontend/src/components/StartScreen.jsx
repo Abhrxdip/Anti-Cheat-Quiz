@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function StartScreen({ onStart, loading, onOpenAdmin }) {
+export default function StartScreen({ onStart, loading, onOpenAdmin, error }) {
   const [name, setName] = useState("");
 
   const handleSubmit = async (event) => {
@@ -43,6 +43,12 @@ export default function StartScreen({ onStart, loading, onOpenAdmin }) {
             {loading ? "Starting..." : "Start Quiz"}
           </button>
         </form>
+
+        {error ? (
+          <p className="mt-3 rounded-lg border border-rose-400/40 bg-rose-400/10 px-3 py-2 text-sm text-rose-200">
+            {error}
+          </p>
+        ) : null}
 
         <div className="mt-4 flex justify-end">
           <button

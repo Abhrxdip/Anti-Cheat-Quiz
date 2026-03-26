@@ -10,7 +10,7 @@ import AdminDashboard from "./components/AdminDashboard";
 function AppBody() {
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState("quiz");
-  const { status, result, bootQuiz, setError } = useQuiz();
+  const { status, result, bootQuiz, setError, error } = useQuiz();
 
   const handleStart = async (name) => {
     try {
@@ -39,7 +39,14 @@ function AppBody() {
     return <AdminDashboard onBack={() => setView("quiz")} />;
   }
 
-  return <StartScreen loading={loading} onStart={handleStart} onOpenAdmin={() => setView("admin")} />;
+  return (
+    <StartScreen
+      loading={loading}
+      error={error}
+      onStart={handleStart}
+      onOpenAdmin={() => setView("admin")}
+    />
+  );
 }
 
 function App() {
