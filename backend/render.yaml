@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: backend-for-quiz
+    env: node
+    plan: free
+    autoDeploy: true
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: PORT
+        value: 10000
