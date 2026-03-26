@@ -1,7 +1,14 @@
 import { useState } from "react";
 
-export default function StartScreen({ onStart, loading, onOpenAdmin, error }) {
+export default function StartScreen({
+  onStart,
+  loading,
+  onOpenAdmin,
+  error,
+  adminError,
+}) {
   const [name, setName] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -50,14 +57,25 @@ export default function StartScreen({ onStart, loading, onOpenAdmin, error }) {
           </p>
         ) : null}
 
-        <div className="mt-4 flex justify-end">
-          <button
-            type="button"
-            onClick={onOpenAdmin}
-            className="rounded-lg border border-cyan-300/40 bg-cyan-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-cyan-200 transition hover:border-cyan-200"
-          >
-            Open Admin Dashboard
-          </button>
+        <div className="mt-6 rounded-xl border border-cyan-300/30 bg-cyan-300/10 p-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan-200">Admin Access</p>
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+            <input
+              type="password"
+              value={adminPassword}
+              onChange={(event) => setAdminPassword(event.target.value)}
+              placeholder="Enter admin password"
+              className="w-full rounded-lg border border-slate-600 bg-slate-800 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-300"
+            />
+            <button
+              type="button"
+              onClick={() => onOpenAdmin(adminPassword)}
+              className="rounded-lg border border-cyan-300/40 bg-cyan-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-cyan-200 transition hover:border-cyan-200"
+            >
+              Open Admin Dashboard
+            </button>
+          </div>
+          {adminError ? <p className="mt-2 text-xs text-rose-300">{adminError}</p> : null}
         </div>
       </div>
     </div>

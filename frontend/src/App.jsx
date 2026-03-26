@@ -7,9 +7,12 @@ import ResultScreen from "./components/ResultScreen";
 import DisqualifiedScreen from "./components/DisqualifiedScreen";
 import AdminDashboard from "./components/AdminDashboard";
 
+const ADMIN_PASSWORD = "abhradip69";
+
 function AppBody() {
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState("quiz");
+  const [adminError, setAdminError] = useState("");
   const { status, result, bootQuiz, setError, error } = useQuiz();
 
   const handleStart = async (name) => {
@@ -21,6 +24,16 @@ function AppBody() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOpenAdmin = (password) => {
+    if (password !== ADMIN_PASSWORD) {
+      setAdminError("Access denied. MAKA LADLE MEOW GOP GOP");
+      return;
+    }
+
+    setAdminError("");
+    setView("admin");
   };
 
   if (status === "in_progress") {
@@ -44,7 +57,8 @@ function AppBody() {
       loading={loading}
       error={error}
       onStart={handleStart}
-      onOpenAdmin={() => setView("admin")}
+      onOpenAdmin={handleOpenAdmin}
+      adminError={adminError}
     />
   );
 }
