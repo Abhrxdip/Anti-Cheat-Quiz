@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { getAdminSubmissions } from "../services/api";
+import {
+  getAdminSubmissions,
+  getHealth,
+  getServerInfo,
+  reportViolation,
+  startQuiz,
+  submitQuiz,
+} from "../services/api";
 
 function formatDate(value) {
   if (!value) {
@@ -17,6 +24,15 @@ export default function AdminDashboard({ onBack }) {
     disqualifiedCount: 0,
     submissions: [],
   });
+  const [testerName, setTesterName] = useState("abhra");
+  const [testerSessionToken, setTesterSessionToken] = useState("");
+  const [violationType, setViolationType] = useState("tab_switch");
+  const [clientDurationSeconds, setClientDurationSeconds] = useState("30");
+  const [submitReason, setSubmitReason] = useState("manual_test_from_dashboard");
+  const [answersJson, setAnswersJson] = useState("[]");
+  const [latestResponse, setLatestResponse] = useState("No API action run yet.");
+  const [testerError, setTesterError] = useState("");
+  const [startQuestions, setStartQuestions] = useState([]);
 
   const load = async () => {
     try {
@@ -44,6 +60,55 @@ export default function AdminDashboard({ onBack }) {
     const total = data.submissions.reduce((sum, entry) => sum + entry.score, 0);
     return (total / data.submissions.length).toFixed(2);
   }, [data.submissions]);
+
+  const runAction = async (fn) => {
+    try {
+      setTesterError("");
+      const payload = await fn();
+      setLatestResponse(JSON.stringify(payload, null, 2));
+    } catch (err) {
+      setTesterError(err.message || "API request failed");
+    }
+  };
+
+  const handleStartQuiz = () => {
+    runAction(async () => {
+      const payload = await startQuiz(testerName);
+      setTesterSessionToken(payload.sessionToken || "");
+      setStartQuestions(payload.questions || []);
+      return payload;
+    });
+  };
+
+  const handleViolation = () => {
+    runAction(async () => {
+      return reportViolation({
+        sessionToken: testerSessionToken,
+        type: violationType,
+        clientTimestamp: Date.now(),
+      });
+    });
+  };
+
+  const handleSubmit = () => {
+    runAction(async () => {
+      const answers = JSON.parse(answersJson);
+      return submitQuiz({
+        sessionToken: testerSessionToken,
+        answers,
+        clientDurationSeconds: Number(clientDurationSeconds) || 30,
+        reason: submitReason,
+      });
+    });
+  };
+
+  const autofillAnswers = () => {
+    const generated = startQuestions.map((question) => ({
+      questionId: question.id,
+      optionId: question.options?.[0]?.id || "",
+    }));
+    setAnswersJson(JSON.stringify(generated, null, 2));
+  };
 
   return (
     <div className="mx-auto min-h-screen w-full max-w-6xl px-4 py-8 sm:px-8">
@@ -107,6 +172,117 @@ export default function AdminDashboard({ onBack }) {
               No submissions recorded yet.
             </p>
           ) : null}
+        </div>
+
+        <div className="mt-8 rounded-2xl border border-cyan-300/30 bg-slate-800/70 p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">Backend API Tester</p>
+          <h2 className="mt-2 text-lg font-bold text-white">Run Backend Endpoints Without Postman</h2>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <input
+              value={testerName}
+              onChange={(event) => setTesterName(event.target.value)}
+              placeholder="User name"
+              className="rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-100"
+            />
+            <input
+              value={testerSessionToken}
+              onChange={(event) => setTesterSessionToken(event.target.value)}
+              placeholder="Session token"
+              className="rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-100"
+            />
+            <select
+              value={violationType}
+              onChange={(event) => setViolationType(event.target.value)}
+              className="rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-100"
+            >
+              <option value="tab_switch">tab_switch</option>
+              <option value="window_blur">window_blur</option>
+              <option value="fullscreen_exit">fullscreen_exit</option>
+              <option value="right_click">right_click</option>
+              <option value="copy_attempt">copy_attempt</option>
+              <option value="back_navigation">back_navigation</option>
+            </select>
+            <input
+              value={clientDurationSeconds}
+              onChange={(event) => setClientDurationSeconds(event.target.value)}
+              placeholder="Client duration seconds"
+              className="rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-100"
+            />
+          </div>
+
+          <input
+            value={submitReason}
+            onChange={(event) => setSubmitReason(event.target.value)}
+            placeholder="Submit reason"
+            className="mt-3 w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-slate-100"
+          />
+
+          <textarea
+            value={answersJson}
+            onChange={(event) => setAnswersJson(event.target.value)}
+            rows={8}
+            className="mt-3 w-full rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 font-mono text-xs text-slate-100"
+            placeholder='[{"questionId":"q1","optionId":"a"}]'
+          />
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => runAction(getServerInfo)}
+              className="rounded-lg border border-slate-500 px-3 py-2 text-xs font-semibold text-slate-100"
+            >
+              GET /
+            </button>
+            <button
+              type="button"
+              onClick={() => runAction(getHealth)}
+              className="rounded-lg border border-slate-500 px-3 py-2 text-xs font-semibold text-slate-100"
+            >
+              GET /api/health
+            </button>
+            <button
+              type="button"
+              onClick={handleStartQuiz}
+              className="rounded-lg border border-emerald-400/60 px-3 py-2 text-xs font-semibold text-emerald-200"
+            >
+              POST /api/quiz/start
+            </button>
+            <button
+              type="button"
+              onClick={handleViolation}
+              className="rounded-lg border border-amber-400/60 px-3 py-2 text-xs font-semibold text-amber-200"
+            >
+              POST /api/quiz/violation
+            </button>
+            <button
+              type="button"
+              onClick={autofillAnswers}
+              className="rounded-lg border border-sky-400/60 px-3 py-2 text-xs font-semibold text-sky-200"
+            >
+              Autofill Answers
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              className="rounded-lg border border-fuchsia-400/60 px-3 py-2 text-xs font-semibold text-fuchsia-200"
+            >
+              POST /api/quiz/submit
+            </button>
+            <button
+              type="button"
+              onClick={() => runAction(getAdminSubmissions)}
+              className="rounded-lg border border-cyan-400/60 px-3 py-2 text-xs font-semibold text-cyan-200"
+            >
+              GET /api/admin/submissions
+            </button>
+          </div>
+
+          {testerError ? <p className="mt-3 text-sm text-rose-300">{testerError}</p> : null}
+
+          <pre className="mt-3 overflow-x-auto rounded-lg border border-slate-700 bg-slate-950 p-3 text-xs text-slate-200">
+            {latestResponse}
+          </pre>
         </div>
       </div>
     </div>

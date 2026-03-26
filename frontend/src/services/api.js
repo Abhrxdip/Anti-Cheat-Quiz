@@ -53,3 +53,15 @@ export function getAdminSubmissions() {
     method: "GET",
   });
 }
+
+export function getHealth() {
+  return request("/api/health", {
+    method: "GET",
+  });
+}
+
+export function getServerInfo() {
+  return request("/", {
+    method: "GET",
+  });
+}
