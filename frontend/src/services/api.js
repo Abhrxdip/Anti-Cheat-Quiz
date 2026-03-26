@@ -1,10 +1,13 @@
-const API_BASE_URL =
+const RAW_API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "https://backend-for-quiz-mvji.onrender.com";
+const API_BASE_URL = RAW_API_BASE_URL.replace(/\/+$/, "");
 
 async function request(path, options = {}) {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+
   let response;
   try {
-    response = await fetch(`${API_BASE_URL}${path}`, {
+    response = await fetch(`${API_BASE_URL}${normalizedPath}`, {
       headers: {
         "Content-Type": "application/json",
         ...(options.headers || {}),
